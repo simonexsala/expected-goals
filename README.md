@@ -1,2 +1,2 @@
 # football
-Client-Server application
+Node.js Client-Server application
