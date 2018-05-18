@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Footy</title>
+
+    <script src="libraries/p5.js" type="text/javascript"></script>
+    <script src="libraries/p5.dom.js" type="text/javascript"></script>
+    <script src="libraries/p5.sound.js" type="text/javascript"></script>
+    <script src="libraries/p5.dom.js" type="text/javascript"></script>
+
+    <script src="sketch.js" type="text/javascript"></script>
+    <script src="shot.js" type="text/javascript"></script>
+
+    <script src="app.js" type="text/javascript"></script>
+    <script src="/socket.io/socket.io.js" type="text/javascript"></script>
+    <script src="http://code.jquery.com/jquery-1.10.2.min.js" type="text/javascript"></script>
+    <script>
+      $(function () {
+        var socket = io();
+        $('form').submit(function() {
+          socket.emit('message', $('#m').val());
+          $('#m').val('');
+          return false;
+        });
+        socket.on('messageClient', function(msg) {
+          var temp = msg.valueOf();
+          var messageHtml = '<li class="other">' + '<div class="msg">' +
+                            '<p>' + temp + '</p>' + '</li>';
+          $('#messages').append(messageHtml);
+        });
+        socket.on('messageServer', function(msg) {
+          var temp = msg.valueOf();
+          var messageHtml = '<li class="self">' + '<div class="msg">' +
+                            '<p>' + temp + '</p>' + '</li>';
+          $('#messages').append(messageHtml);
+        });
+      });
+    </script>
+
+    <link href="assets/football.ico" rel="shortcut icon" type="image/ico">
+    <link href="style.css" rel="stylesheet" type="text/css">
+
+  </head>
+  <body>
+    <div class="menu"><div class="name">Soccer Bot</div></div>
+    <ol id="messages" class="chat">
+      <li class="self">
+        <div class="msg">
+          <p>Hi!</p>
+          <p>Type <i>help</i> for commands</p>
+        </div>
+      </li>
+    </ol>
+    <form action="">
+      <input id="m" class="textarea" type="text" placeholder="Type here!" autocomplete="off">
+    </form>
+  </body>
+</html>
