@@ -23,18 +23,40 @@
           $('#m').val('');
           return false;
         });
+
+        // Client message
         socket.on('messageClient', function(msg) {
           var temp = msg.valueOf();
           var messageHtml = '<li class="self">' + '<div class="msg">' +
                             '<p>' + temp + '</p>' + '</li>';
           $('#messages').append(messageHtml);
         });
-        socket.on('messageServer', function(msg) {
+
+        // List
+        socket.on('messageServerList', function(msg) {
           var temp = msg.valueOf();
           var messageHtml = '<li class="other">' + '<div class="msg">' +
                             '<p>' + temp + '</p>' + '</li>';
           $('#messages').append(messageHtml);
         });
+
+        // Map
+        socket.on('messageServerMap', function(msg) {
+          var temp = msg.valueOf();
+          var messageHtml = '<li class="other" id="map">' + '<div class="msg">';
+          messageHtml += "";
+          messageHtml += '</li>';
+          $('#messages').append(messageHtml);
+        });
+
+        // Plot
+        socket.on('messageServerPlot', function(msg) {
+          var temp = msg.valueOf();
+          var messageHtml = '<li class="other">' + '<div class="msg">' +
+                            '<p>' + temp + '</p>' + '</li>';
+          $('#messages').append(messageHtml);
+        });
+        /* End */
       });
     </script>
 
@@ -48,7 +70,7 @@
       <li class="other">
         <div class="msg">
           <p>Hi!</p>
-          <p>Type <b>help</b> for commands</p>
+          <p>Type <b>help</b> for an expanded list of commands.</p>
         </div>
       </li>
     </ol>
