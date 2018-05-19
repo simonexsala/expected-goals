@@ -46,7 +46,7 @@ io.on('connection', function(socket) {
         connection.query(sql, function (err, result, fields) {
           if (err) throw err;
           console.log(result);
-          io.emit('messageServer', JSON.stringify(result))
+          io.emit('messageServerList', JSON.stringify(result))
         });
       });
     } else if (request.toUpperCase().split(" ")[0].localeCompare("MAP") == 0) {
@@ -59,7 +59,7 @@ io.on('connection', function(socket) {
         connection.query(sql, function (err, result, fields) {
           if (err) throw err;
           console.log(result);
-          io.emit('messageServer', JSON.stringify(result))
+          io.emit('messageServerMap', JSON.stringify(result))
         });
       });
     } else if (request.toUpperCase().split(" ")[0].localeCompare("PLOT") == 0) {
@@ -74,7 +74,7 @@ io.on('connection', function(socket) {
         connection.query(sql, function (err, result, fields) {
           if (err) throw err;
           console.log(result);
-          io.emit('messageServer', JSON.stringify(result))
+          io.emit('messageServerPlot', JSON.stringify(result))
         });
       });
     }
