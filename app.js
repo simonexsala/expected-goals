@@ -6,11 +6,16 @@ var bodyParser = require('body-parser');
 
 config = require("./config.js");    // Database credentials
 db = config.database;
+
 var connection = mysql.createConnection({
   host: db.host,
   user: db.user,
   password: db.password,
   database: db.database
+});
+
+connection.connect(function(err) {
+    if (err) throw err;
 });
 
 var app = express();
@@ -40,27 +45,21 @@ io.on('connection', function(socket) {
       // List of matches played by the team
       var team_name = request.split(" ")[1];
 
-      connection.connect(function(err) {
+      var sql = "SELECT * FROM matches, teams WHERE (matches.id_home = teams.id_team OR matches.id_away = teams.id_team) AND team_name like '" + team_name + "';";
+      connection.query(sql, function (err, result, fields) {
         if (err) throw err;
-        var sql = "SELECT * FROM matches, teams WHERE (matches.id_home = teams.id_team OR matches.id_away = teams.id_team) AND team_name like '" + team_name + "';";
-        connection.query(sql, function (err, result, fields) {
-          if (err) throw err;
-          console.log(result);
-          io.emit('messageServerList', JSON.stringify(result))
-        });
+        console.log(result);
+        io.emit('messageServerList', JSON.stringify(result))
       });
     } else if (request.toUpperCase().split(" ")[0].localeCompare("MAP") == 0) {
       // xG map of the game
       var id_match = request.split(" ")[1];
 
-      connection.connect(function(err) {
+      var sql = "SELECT * FROM shots WHERE id_match = " + id_match + ";";
+      connection.query(sql, function (err, result, fields) {
         if (err) throw err;
-        var sql = "SELECT * FROM shots WHERE id_match = " + id_match + ";";
-        connection.query(sql, function (err, result, fields) {
-          if (err) throw err;
-          console.log(result);
-          io.emit('messageServerMap', JSON.stringify(result))
-        });
+        console.log(result);
+        io.emit('messageServerMap', JSON.stringify(result))
       });
     } else if (request.toUpperCase().split(" ")[0].localeCompare("PLOT") == 0) {
       // xG plot of the team over the time interval
@@ -68,14 +67,11 @@ io.on('connection', function(socket) {
       var start_date = request.split(" ")[2];
       var end_date = request.split(" ")[3];
 
-      connection.connect(function(err) {
+      var sql = "SELECT DISTINCT shots.id_shot, shots.id_match, shots.id_team FROM shots, matches, teams WHERE ((matches.id_home = teams.id_team AND matches.id_home = shots.id_team) OR (matches.id_away = teams.id_team AND matches.id_away = shots.id_team)) AND team_name like '" + team_name + "' AND (date BETWEEN '" + start_date + "' AND '" + end_date + "');";
+      connection.query(sql, function (err, result, fields) {
         if (err) throw err;
-        var sql = "SELECT DISTINCT shots.id_shot, shots.id_match, shots.id_team FROM shots, matches, teams WHERE ((matches.id_home = teams.id_team AND matches.id_home = shots.id_team) OR (matches.id_away = teams.id_team AND matches.id_away = shots.id_team)) AND team_name like '" + team_name + "' AND (date BETWEEN '" + start_date + "' AND '" + end_date + "');";
-        connection.query(sql, function (err, result, fields) {
-          if (err) throw err;
-          console.log(result);
-          io.emit('messageServerPlot', JSON.stringify(result))
-        });
+        console.log(result);
+        io.emit('messageServerPlot', JSON.stringify(result))
       });
     }
   });
