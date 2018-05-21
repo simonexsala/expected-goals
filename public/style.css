@@ -33,6 +33,17 @@ a {
     -ms-user-select: none;
 }
 
+.name {
+    position: absolute;
+    top: 5px;
+    left: 40px;
+    font-family: 'Lato';
+    font-size: 30px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.98);
+    cursor: default;
+}
+
 /* M E S S A G E S */
 
 .chat {
@@ -149,4 +160,27 @@ input.textarea {
     padding-right: 55px;
     color: #666;
     font-weight: 400;
+}
+
+/* table */
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    font-family: 'Lato';
+    font-weight: 400;
+    margin: 0;
+    color: #777777;
+}
+
+th, td {
+  text-align: center;
+  padding: 8px;
+}
+
+tr:hover { background-color: rgba(112,209,247,0.2) }
+
+th {
+    background-color: rgba(82,179,217,0.9);
+    color: white;
 }
