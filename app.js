@@ -1,8 +1,8 @@
-var express = require('express');   // Express middleware
-var http = require('http');         // http-server
-var io = require('socket.io');      // Socket communication with client
-var mysql = require('mysql');       // Connection to the database
-var bodyParser = require('body-parser');
+var express     = require('express');       // Express middleware
+var http        = require('http');          // http-server
+var io          = require('socket.io');     // Socket communication with client
+var mysql       = require('mysql');         // Connection to the database
+var bodyParser  = require('body-parser');   // Parse messages sent from client
 
 config = require("./config.js");    // Database credentials
 db = config.database;
@@ -14,26 +14,34 @@ var connection = mysql.createConnection({
   database: db.database
 });
 
+// Connection to the database
 connection.connect(function(err) {
     if (err) throw err;
 });
 
 var app = express();
+// Static files used by the client: index.html, style.css, assets, etc.
 app.use(express.static('./public'));
 
+// Server is listening on port 8124
 var server = http.createServer(app).listen(8124);
 io = io.listen(server);
 console.log("Server up on port 8124.");
 
+// 'connection' event handler. This gets called when a new client connects to the server.
 io.on('connection', function(socket) {
   console.log('Socket.io: connection with the client ' + socket.id + ' established.');
-
+  
+  // 'message' event handler. This gets called when a new message is sent from the client.
   socket.on('message', function(data) {
     console.log("message from client: " + data);
+    // The same message is sent back to the client, and it is appended to the chat.
     io.emit('messageClient', data);
     var request = data;
-
+    
+    // Checking the content of the message to decide what to do.
     if (request.toUpperCase().split(" ")[0].localeCompare("HELP") == 0) {
+      // List of commands supported
       var commands = "<p>List of commands supported:</p>" +
                     "<p><b>list</b> [team_name] -> match list</p>" +
                     "<p><b>map</b> [id_match] -> xG map of the match</p>" +
@@ -74,6 +82,7 @@ io.on('connection', function(socket) {
         io.emit('messageServerPlot', JSON.stringify(result))
       });
     } else {
+      // Default
       var commands = "<p>Sorry, can't understand what you just asked.</p>";
       io.emit('messageServer', commands);
     }
