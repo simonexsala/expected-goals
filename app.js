@@ -73,6 +73,9 @@ io.on('connection', function(socket) {
         console.log(result);
         io.emit('messageServerPlot', JSON.stringify(result))
       });
+    } else {
+      var commands = "<p>Sorry, can't understand what you just asked.</p>";
+      io.emit('messageServer', commands);
     }
   });
 });
