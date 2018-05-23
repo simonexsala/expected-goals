@@ -31,14 +31,14 @@ console.log("Server up on port 8124.");
 // 'connection' event handler. This gets called when a new client connects to the server.
 io.on('connection', function(socket) {
   console.log('Socket.io: connection with the client ' + socket.id + ' established.');
-  
+
   // 'message' event handler. This gets called when a new message is sent from the client.
   socket.on('message', function(data) {
     console.log("message from client: " + data);
     // The same message is sent back to the client, and it is appended to the chat.
     io.emit('messageClient', data);
     var request = data;
-    
+
     // Checking the content of the message to decide what to do.
     if (request.toUpperCase().split(" ")[0].localeCompare("HELP") == 0) {
       // List of commands supported
@@ -47,13 +47,13 @@ io.on('connection', function(socket) {
                     "<p><b>map</b> [id_match] -> xG map of the match</p>" +
                     "<p><b>plot</b> [team_name], [start_date], [end_date] -> xG plot over the time interval</p>" +
                     "<p>All parameters should be separated with a <b>space character</b>.</p>" +
-                    "<p>Dates accepted only in the following format: <b>yyyy/mm/dd.</b></p>";
+                    "<p>Dates are accepted only in the following format: <b>yyyy</b>/<b>mm</b>/<b>dd</b>.</p>";
       io.emit('messageServer', commands);
     } else if (request.toUpperCase().split(" ")[0].localeCompare("LIST") == 0) {
       // List of matches played by the team
       var team_name = request.split(" ")[1];
 
-      var sql = "SELECT * FROM matches, teams WHERE (matches.id_home = teams.id_team OR matches.id_away = teams.id_team) AND team_name like '" + team_name + "';";
+      var sql = "SELECT id_match, round, a.team_name as home_team, c.team_name as away_team, home_goals, away_goals, date FROM matches b JOIN teams a ON b.id_home = a.id_team JOIN teams c ON b.id_away = c.id_team WHERE (a.team_name like '" + team_name + "' OR c.team_name like '" + team_name + "') ORDER BY round;";
       connection.query(sql, function (err, result, fields) {
         if (err) throw err;
         console.log(result);
@@ -62,7 +62,6 @@ io.on('connection', function(socket) {
     } else if (request.toUpperCase().split(" ")[0].localeCompare("MAP") == 0) {
       // xG map of the game
       var id_match = request.split(" ")[1];
-
       var sql = "SELECT * FROM shots WHERE id_match = " + id_match + ";";
       connection.query(sql, function (err, result, fields) {
         if (err) throw err;
@@ -75,7 +74,8 @@ io.on('connection', function(socket) {
       var start_date = request.split(" ")[2];
       var end_date = request.split(" ")[3];
 
-      var sql = "SELECT DISTINCT shots.id_shot, shots.id_match, shots.id_team FROM shots, matches, teams WHERE ((matches.id_home = teams.id_team AND matches.id_home = shots.id_team) OR (matches.id_away = teams.id_team AND matches.id_away = shots.id_team)) AND team_name like '" + team_name + "' AND (date BETWEEN '" + start_date + "' AND '" + end_date + "');";
+      // var sql = "SELECT DISTINCT shots.id_shot, shots.id_match, shots.id_team FROM shots, matches, teams WHERE ((matches.id_home = teams.id_team AND matches.id_home = shots.id_team) OR (matches.id_away = teams.id_team AND matches.id_away = shots.id_team)) AND team_name like '" + team_name + "' AND (date BETWEEN '" + start_date + "' AND '" + end_date + "');";
+      var sql = "SELECT xG FROM shot_quality";
       connection.query(sql, function (err, result, fields) {
         if (err) throw err;
         console.log(result);
@@ -83,7 +83,7 @@ io.on('connection', function(socket) {
       });
     } else {
       // Default
-      var commands = "<p>Sorry, can't understand what you just asked.</p>";
+      var commands = "<p>I'm sorry, I can't understand what you're asking me. Try reformatting the request.</p>";
       io.emit('messageServer', commands);
     }
   });
