@@ -2,11 +2,12 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Footy</title>
+  <title>Footy Bot</title>
 
   <script src="libraries/p5.js" type="text/javascript"></script>
   <script src="libraries/p5.min.js" type="text/javascript"></script>
   <script src="libraries/p5.dom.js" type="text/javascript"></script>
+  <script src="libraries/grafica.js" type="text/javascript"></script>
   <script src="/socket.io/socket.io.js" type="text/javascript"></script>
   <script src="http://code.jquery.com/jquery-1.10.2.min.js" type="text/javascript"></script>
   <script src="guidGenerator.js" type="text/javascript"></script>
@@ -38,9 +39,17 @@
 
       // List
       socket.on('messageServerList', function(msg) {
-        var temp = msg.valueOf();
-        var messageHtml = '<li class="other">' + '<div class="msg">' +
-                          '<p>' + temp + '</p>' + '</li>';
+        var obj = JSON.parse(msg);
+        var objLength = Object.keys(obj).length;
+        var messageHtml = '<li class="other"><div class="msg"><table><tr><th>Id</th><th>Round</th><th>Match</th><th>Score</th><th>Date</th></tr>';
+
+        for (var i = 0; i < objLength; i++) {
+          messageHtml += "<tr>";
+          messageHtml += "<td>" + obj[i].id_match + "</td><td>" + obj[i].round + "</td><td>" + obj[i].home_team + "-" + obj[i].away_team + "</td>";
+          messageHtml += "<td>" + obj[i].home_goals + "-" + obj[i].away_goals + "</td><td>" + obj[i].date.split("T")[0] + "</td>";
+          messageHtml += "</tr>";
+        }
+        messageHtml += '</table>' + '</li>';
         $('#messages').append(messageHtml);
       });
 
@@ -51,7 +60,6 @@
         div_id = guidGenerator();
         // Scrivi di GUID:
         // https://en.wikipedia.org/wiki/Universally_unique_identifier
-        console.log(msg.valueOf());
         var messageHtml = '<li class="other">' + '<div class="msg" id="map-' + div_id + '">';
         messageHtml += '</li>';
         $('#messages').append(messageHtml);
@@ -69,9 +77,7 @@
             p.background(img);
 
             for (var i = 0; i < objLength; i++) {
-              shots.push(new Shot(obj[i].x + Math.random() * 534 / 2,
-                                  obj[i].y + Math.random() * 534 / 2,
-                                  obj[i].distance, obj[i].angle, obj[i].scored));
+              shots.push(new Shot(obj[i].x, obj[i].y, obj[i].scored));
             }
 
             for (var i = 0; i < objLength; i++) {
@@ -79,20 +85,20 @@
             }
           }
 
-          function Shot(_x, _y, _distance, _angle, _scored) {
+          function Shot(_x, _y, _scored) {
             this.x = _x;
             this.y = _y;
-            this.distance = _distance;
-            this.angle = _angle;
             this.scored = _scored;
           }
 
           Shot.prototype.display = function() {
             // xG in percentuale.
-            var xG = p.constrain(this.expectedQuality(this.x, this.y) * 100, 5, 20);
+            var xG = this.expectedQuality(this.x, this.y) * 100;
+            console.log(xG);
+            xG = p.constrain(xG, 0, 50);
             p.stroke(0);
             if (this.scored) {
-              p.fill(120);
+              p.fill(52, 172, 255);
               p.ellipse(this.x, this.y, xG, xG);
             } else {
               p.fill(255);
@@ -106,32 +112,34 @@
             // 356 -> larghezza campo in pixel
             // 534 -> lunghezza campo in pixel
 
-            // 5.1 -> px per m (5.1px = 1m)
             // 201 -> palo dx (campo sx)
             // 152 -> palo sx (campo sx)
             //
 
-            var pitchX 		    = x * 68 / 356,
-                pitchY 		    = y * (105 / 2) / 534,
-                leftPostXY 	  = [152 * 68 / 356, 0 * (105 / 2) / (534 / 2)],
-                rightPostXY 	= [201 * 68 / 356, 0 * (105 / 2) / (534 / 2)],
-                centreGoalXY 	= [152 + ((201 - 152) / 2) * 68 / 356, 0 * (105 / 2) / (534 / 2)],
+            var pitchY 		    = y * 68 / 356,
+                pitchX 		    = x * (105 / 2) / 534,
+                leftPostXY 	  = [0 * (105 / 2) / (534 / 2), 152 * 68 / 356],
+                rightPostXY 	= [0 * (105 / 2) / (534 / 2), 201 * 68 / 356],
+                centreGoalXY 	= [0 * (105 / 2) / (534 / 2), (152 * 68 / 356) + ((201 * 68 / 356) - (152 * 68 / 356)) / 2],
                 goalWidth 	  = 49 * 68 / 356;
 
-            if (x < (534 / 2)) {
-              var distNearPost = Math.sqrt(Math.pow(pitchX - leftPostXY[0], 2)  + Math.pow(pitchY - leftPostXY[1], 2)),
-                  distFarPost  = Math.sqrt(Math.pow(pitchX - rightPostXY[0], 2) + Math.pow(pitchY - rightPostXY[1], 2));
+            if (y < (356 / 2)) {
+              var distNearPost = p.dist(pitchX, pitchY, leftPostXY[0], leftPostXY[1]);
+              var distFarPost  = p.dist(pitchX, pitchY, rightPostXY[0], rightPostXY[1]);
             } else {
-              var distFarPost  = Math.sqrt(Math.pow(pitchX - leftPostXY[0], 2)  + Math.pow(pitchY - leftPostXY[1], 2)),
-                  distNearPost = Math.sqrt(Math.pow(pitchX - rightPostXY[0], 2) + Math.pow(pitchY - rightPostXY[1], 2));
+              var distNearPost = p.dist(pitchX, pitchY, rightPostXY[0], rightPostXY[1]);
+              var distFarPost  = p.dist(pitchX, pitchY, leftPostXY[0], leftPostXY[1]);
             }
             // Angolo della posizione del tiro e i due pali utilizzando il teorema del coseno.
-            var goalAngle = Math.acos((Math.pow(distNearPost, 2) + Math.pow(distFarPost, 2) - Math.pow(goalWidth, 2)) / (2 * distNearPost * distFarPost));
+            var goalAngle = ((Math.pow(distFarPost, 2) + Math.pow(distNearPost, 2)) - Math.pow(goalWidth, 2)) / (2 * distNearPost * distFarPost);
+            var goalAngle = Math.acos(goalAngle);
             // Distanza tra la posizione del tiro e il centro della porta.
             var goalDistance = Math.sqrt(Math.pow(centreGoalXY[0] - pitchX, 2) + Math.pow(centreGoalXY[1] - pitchY, 2));
 
-            var xG = 1 / (1 + Math.exp(-(-1.7 + 1.338737 * goalAngle - 0.110384 * goalDistance + 0.168798 * goalAngle * goalDistance)));
-            console.table({ name:"xG", value: xG, name: "x", value: x, name: "y", value: y, name: "distance", value: goalDistance});
+            // var xG = 1 / (1 + Math.exp((-1.7 + 1.338737 * goalAngle - 0.110384 * goalDistance + 0.168798 * goalAngle * goalDistance)));
+            var distanceCoeff = 0.203;
+            var angleCoeff    = 1.338737;
+            var xG = 1.13 * Math.exp(-distanceCoeff * goalDistance + angleCoeff * goalAngle * 0.01) + distanceCoeff * 0.1 + angleCoeff * 0.001;
             return xG;
           }
 
@@ -141,10 +149,44 @@
 
       // Plot
       socket.on('messageServerPlot', function(msg) {
-        var temp = msg.valueOf();
-        var messageHtml = '<li class="other">' + '<div class="msg">' +
-                          '<p>' + temp + '</p>' + '</li>';
+        var obj = JSON.parse(msg);
+        var objLength = Object.keys(obj).length;
+        div_id = guidGenerator();
+        var messageHtml = '<li class="other">' + '<div class="msg" id="plot-' + div_id + '">';
+        messageHtml += '</li>';
         $('#messages').append(messageHtml);
+
+        var sketch = function(p) {
+
+          p.setup = function() {
+        		var points = [], plot;
+
+        		p.createCanvas(534, 356);
+
+        		// Prepare the points for the plot
+        		points = [];
+
+        		for (var i = 0; i < 20; i++) {
+        			points[i] = new GPoint(i, obj[i].xG);
+        		}
+
+        		// Create a new plot and set its position on the screen
+        		plot = new GPlot(p);
+        		plot.setPos(0, 0);
+        		plot.setOuterDim(p.width, p.height);
+
+        		// Add the points
+        		plot.setPoints(points);
+
+        		plot.setTitleText("xG plot over the selected time period.");
+        		plot.getXAxis().setAxisLabelText("Shot");
+        		plot.getYAxis().setAxisLabelText("xG");
+
+        		plot.defaultDraw();
+          }
+        };
+
+        new p5(sketch, 'plot-' + div_id);
       });
       /* End */
     });
@@ -165,7 +207,7 @@
     </li>
   </ol>
   <form action="">
-    <input id="m" class="textarea" type="text" placeholder="Type here!" autocomplete="off">
+    <input id="m" class="textarea" type="text" placeholder="Type here!" autocomplete="off" autofocus>
   </form>
 </body>
 </html>
