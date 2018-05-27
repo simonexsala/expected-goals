@@ -53,6 +53,18 @@
         $('#messages').append(messageHtml);
       });
 
+      // Info
+      socket.on('messageServerInfo', function(msg) {
+        var obj = JSON.parse(msg);
+        var messageHtml = '<li class="other"><div class="msg"><table><tr><th>Round</th><th>Match</th><th>Score</th><th>Date</th></tr>';
+        messageHtml += "<tr>";
+        messageHtml += "<td>" + obj[0].round + "</td><td>" + obj[0].home_team + "-" + obj[0].away_team + "</td>";
+        messageHtml += "<td>" + obj[0].home_goals + "-" + obj[0].away_goals + "</td><td>" + obj[0].date.split("T")[0] + "</td>";
+        messageHtml += "</tr>";
+        messageHtml += '</table>' + '</li>';
+        $('#messages').append(messageHtml);
+      });
+
       // Map
       socket.on('messageServerMap', function(msg) {
         var obj = JSON.parse(msg);
@@ -83,6 +95,11 @@
             for (var i = 0; i < objLength; i++) {
               shots[i].display();
             }
+
+            for (var i = 0; i < objLength; i++) {
+              if (shots[i].scored == 1)
+                shots[i].display();
+            }
           }
 
           function Shot(_x, _y, _scored) {
@@ -94,11 +111,16 @@
           Shot.prototype.display = function() {
             // xG in percentuale.
             var xG = this.expectedQuality(this.x, this.y) * 100;
-            console.log(xG);
-            xG = p.constrain(xG, 0, 50);
+            xG = p.constrain(xG, 0, 40);
+
+            if (this.x < 534 / 2) {
+              var scoredColor = p.color(52, 172, 255);
+            } else {
+              var scoredColor = p.color(124, 252, 0);
+            }
             p.stroke(0);
             if (this.scored) {
-              p.fill(52, 172, 255);
+              p.fill(scoredColor);
               p.ellipse(this.x, this.y, xG, xG);
             } else {
               p.fill(255);
@@ -115,6 +137,9 @@
             // 201 -> palo dx (campo sx)
             // 152 -> palo sx (campo sx)
             //
+            if (x > 534 / 2) {
+              x = 534 - x;
+            }
 
             var pitchY 		    = y * 68 / 356,
                 pitchX 		    = x * (105 / 2) / 534,
@@ -131,15 +156,13 @@
               var distFarPost  = p.dist(pitchX, pitchY, leftPostXY[0], leftPostXY[1]);
             }
             // Angolo della posizione del tiro e i due pali utilizzando il teorema del coseno.
-            var goalAngle = ((Math.pow(distFarPost, 2) + Math.pow(distNearPost, 2)) - Math.pow(goalWidth, 2)) / (2 * distNearPost * distFarPost);
-            var goalAngle = Math.acos(goalAngle);
+            var goalAngle = Math.acos(((Math.pow(distFarPost, 2) + Math.pow(distNearPost, 2)) - Math.pow(goalWidth, 2)) / (2 * distNearPost * distFarPost));
             // Distanza tra la posizione del tiro e il centro della porta.
-            var goalDistance = Math.sqrt(Math.pow(centreGoalXY[0] - pitchX, 2) + Math.pow(centreGoalXY[1] - pitchY, 2));
-
+            var goalDistance = p.dist(pitchX, pitchY, centreGoalXY[0], centreGoalXY[1]);
             // var xG = 1 / (1 + Math.exp((-1.7 + 1.338737 * goalAngle - 0.110384 * goalDistance + 0.168798 * goalAngle * goalDistance)));
-            var distanceCoeff = 0.203;
-            var angleCoeff    = 1.338737;
-            var xG = 1.13 * Math.exp(-distanceCoeff * goalDistance + angleCoeff * goalAngle * 0.01) + distanceCoeff * 0.1 + angleCoeff * 0.001;
+            var distanceCoeff = 0.203682;
+            var angleCoeff    = 0.338737;
+            var xG = 1.13 * Math.exp(-distanceCoeff * goalDistance - angleCoeff * goalAngle) + distanceCoeff * 0.1 + angleCoeff * 0.01;
             return xG;
           }
 
