@@ -43,9 +43,10 @@ io.on('connection', function(socket) {
     if (request.toUpperCase().split(" ")[0].localeCompare("HELP") == 0) {
       // List of commands supported
       var commands = "<p>List of commands supported:</p>" +
-                    "<p><b>list</b> [team_name] -> match list</p>" +
-                    "<p><b>map</b> [id_match] -> xG map of the match</p>" +
-                    "<p><b>plot</b> [team_name], [start_date], [end_date] -> xG plot over the time interval</p>" +
+                    "<p><b>list</b> [team_name]  ⟿  match list for the selected team.</p>" +
+                    "<p><b>info</b> [id_match]  ⟿  information on the selected match.</p>" +
+                    "<p><b>map</b> [id_match]  ⟿  xG map of the match.</p>" +
+                    "<p><b>plot</b> [team_name], [start_date], [end_date]  ⟿  xG plot over the time interval.</p>" +
                     "<p>All parameters should be separated with a <b>space character</b>.</p>" +
                     "<p>Dates are accepted only in the following format: <b>yyyy</b>/<b>mm</b>/<b>dd</b>.</p>";
       io.emit('messageServer', commands);
@@ -66,7 +67,11 @@ io.on('connection', function(socket) {
       connection.query(sql, function (err, result, fields) {
         if (err) throw err;
         console.log(result);
-        io.emit('messageServerMap', JSON.stringify(result))
+        if (result.length == 0) {
+          io.emit('messageServer', "<p>I'm sorry, no available data for the requested match.</p>");
+        } else {
+          io.emit('messageServerMap', JSON.stringify(result))
+        }
       });
     } else if (request.toUpperCase().split(" ")[0].localeCompare("PLOT") == 0) {
       // xG plot of the team over the time interval
@@ -80,6 +85,15 @@ io.on('connection', function(socket) {
         if (err) throw err;
         console.log(result);
         io.emit('messageServerPlot', JSON.stringify(result))
+      });
+    } else if (request.toUpperCase().split(" ")[0].localeCompare("INFO") == 0) {
+      var id_match = request.split(" ")[1];
+
+      var sql = "SELECT round, a.team_name as home_team, c.team_name as away_team, home_goals, away_goals, date FROM matches b JOIN teams a ON b.id_home = a.id_team JOIN teams c ON b.id_away = c.id_team WHERE id_match = " + id_match + ";";
+      connection.query(sql, function (err, result, fields) {
+        if (err) throw err;
+        console.log(result);
+        io.emit('messageServerInfo', JSON.stringify(result))
       });
     } else {
       // Default
