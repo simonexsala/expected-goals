@@ -46,9 +46,8 @@ io.on('connection', function(socket) {
                     "<p><b>list</b> [team_name]  ⟿  match list for the selected team.</p>" +
                     "<p><b>info</b> [id_match]  ⟿  information on the selected match.</p>" +
                     "<p><b>map</b> [id_match]  ⟿  xG map of the match.</p>" +
-                    "<p><b>plot</b> [team_name], [start_date], [end_date]  ⟿  xG plot over the time interval.</p>" +
-                    "<p>All parameters should be separated with a <b>space character</b>.</p>" +
-                    "<p>Dates are accepted only in the following format: <b>yyyy</b>/<b>mm</b>/<b>dd</b>.</p>";
+                    "<p><b>canvas</b>  ⟿  empty interactive canvas.</p>" +
+                    "<p>All parameters must be separated with a <b>space character</b>.</p>";
       io.emit('messageServer', commands);
     } else if (request.toUpperCase().split(" ")[0].localeCompare("LIST") == 0) {
       // List of matches played by the team
@@ -73,19 +72,9 @@ io.on('connection', function(socket) {
           io.emit('messageServerMap', JSON.stringify(result))
         }
       });
-    } else if (request.toUpperCase().split(" ")[0].localeCompare("PLOT") == 0) {
-      // xG plot of the team over the time interval
-      var team_name = request.split(" ")[1];
-      var start_date = request.split(" ")[2];
-      var end_date = request.split(" ")[3];
-
-      // var sql = "SELECT DISTINCT shots.id_shot, shots.id_match, shots.id_team FROM shots, matches, teams WHERE ((matches.id_home = teams.id_team AND matches.id_home = shots.id_team) OR (matches.id_away = teams.id_team AND matches.id_away = shots.id_team)) AND team_name like '" + team_name + "' AND (date BETWEEN '" + start_date + "' AND '" + end_date + "');";
-      var sql = "SELECT xG FROM shot_quality";
-      connection.query(sql, function (err, result, fields) {
-        if (err) throw err;
-        console.log(result);
-        io.emit('messageServerPlot', JSON.stringify(result))
-      });
+    } else if (request.toUpperCase().split(" ")[0].localeCompare("CANVAS") == 0) {
+      // Empty Canvas
+      io.emit('messageServerCanvas', []);
     } else if (request.toUpperCase().split(" ")[0].localeCompare("INFO") == 0) {
       var id_match = request.split(" ")[1];
 
